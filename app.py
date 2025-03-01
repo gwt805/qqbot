@@ -15,7 +15,6 @@ BOT_SECRET = os.getenv('BOT_SECRET', "") # your secret
 @app.route('/qqbot', methods=['POST'])
 def qqbot():
     data = request.get_json()
-
     if not data:
         return jsonify({"error": "Invalid request"}), 400
 
@@ -71,7 +70,7 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
     # url = f"https://qqbot-msg.weilong.workers.dev/v2/users/{openid}/messages" # pythonanywhere + cloudflare
     url = f"https://sandbox.api.sgroup.qq.com/v2/users/{openid}/messages" # 正式环境去掉 sandbox
     headers = {"Authorization": f"QQBot {access_token}", "Content-Type": "application/json"}
-    data = {"msg_type": msg_type, f"{content}": content}
+    data = {"msg_type": msg_type, f"{content_type}": content}
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
@@ -84,7 +83,7 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
     # url = f"https://qqbot-msg.weilong.workers.dev/v2/groups/{group_openid}/messages" # pythonanywhere + cloudflare
     url = f"https://sandbox.api.sgroup.qq.com/v2/groups/{group_openid}/messages" # 正式环境去掉 sandbox
     headers = {"Authorization": f"QQBot {access_token}", "Content-Type": "application/json"}
-    data = {"msg_type": msg_type, f"{content}": content}
+    data = {"msg_type": msg_type, f"{content_type}": content}
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
