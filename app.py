@@ -35,12 +35,16 @@ def qqbot():
             openid = message["author"]["id"]
             content = message["content"].strip()
             msg_id = message["id"]
-            return process_message('private', openid, content, msg_id)
+            is_success =  process_message('private', openid, content, msg_id)
+            if is_success: return jsonify({"status": "Message sent successfully"})
+            else: return jsonify({"error": "Failed to send message"})
         elif event_type == "GROUP_AT_MESSAGE_CREATE":  # 群聊消息
             group_openid = message["group_openid"]
             content = message["content"].strip()
             msg_id = message["id"]
-            return process_message('group', group_openid, content, msg_id)
+            is_success = process_message('group', group_openid, content, msg_id)
+            if is_success: return jsonify({"status": "Message sent successfully"})
+            else: return jsonify({"error": "Failed to send message"})
         else:
             return jsonify({"error": "Unknown event"})
 
@@ -70,8 +74,8 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200: return jsonify({"status": "Message sent successfully"})
-    else: return jsonify({"error": "Failed to send message"})
+    if response.status_code == 200: return True
+    else: return False
 
 def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
     access_token = get_access_token()
@@ -83,8 +87,8 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200: return jsonify({"status": "Message sent successfully"})
-    else: return jsonify({"error": "Failed to send message"})
+    if response.status_code == 200: return True
+    else: return False
 
 def process_message(msg_type, openid, content, msg_id):
     if content == "" or content == '/help':
