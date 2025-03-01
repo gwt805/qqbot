@@ -10,6 +10,8 @@ from flask import Flask, request,jsonify
 
 app = Flask(__name__)
 
+logger.add("qqbot.log", rotation="100 MB", retention="10 days", enqueue=True)
+
 APP_ID = os.getenv('APP_ID', "") # your appID
 BOT_SECRET = os.getenv('BOT_SECRET', "") # your secret
 
@@ -79,6 +81,9 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
 
     response = requests.post(url, headers=headers, json=data)
     logger.info(response.json())
+    if 'code' in response.json():
+        logger.info('private send message failed')
+        send_private_message(openid, msg_type, content_type, response.json()['message'], msg_id=None)
     if response.status_code == 200:
         logger.info('private send message success')
         return True
@@ -97,6 +102,9 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
 
     response = requests.post(url, headers=headers, json=data)
     logger.info(response.json())
+    if 'code' in response.json():
+        logger.info('private send message failed')
+        send_private_message(group_openid, msg_type, content_type, response.json()['message'], msg_id=None)
     if response.status_code == 200:
         logger.info('group send message success')
         return True
