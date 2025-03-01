@@ -1,8 +1,9 @@
-import json
+'''消息类型
+文本:0 | markdown:2 | ark:3 | embed:4 | media:7 富媒体
+'''
 import requests
 import nacl.signing
 import nacl.encoding
-from loguru import logger
 from flask import Flask, request,jsonify
 
 app = Flask(__name__)
@@ -13,7 +14,7 @@ BOT_SECRET = "" # your secret
 @app.route('/qqbot', methods=['POST'])
 def qqbot():
     data = request.get_json()
-#     logger.info(data)
+
     if not data:
         return jsonify({"error": "Invalid request"}), 400
 
@@ -34,29 +35,14 @@ def qqbot():
             openid = message["author"]["id"]
             content = message["content"].strip()
             msg_id = message["id"]
-#             logger.info(f"Received private message from {openid}: {content}")
-
-            # 回复单聊消息
-            reply_message = f"你好，{openid}！收到你的消息：{content}"
-            if send_private_message(openid, reply_message, msg_id):
-                return jsonify({"status": "Message sent successfully"})
-            else:
-                return jsonify({"error": "Failed to send message"}), 500
-
+            process_message('private', openid, content, msg_id)
         elif event_type == "GROUP_AT_MESSAGE_CREATE":  # 群聊消息
             group_openid = message["group_openid"]
             content = message["content"].strip()
             msg_id = message["id"]
-#             logger.info(f"Received group message from {group_openid}: {content}")
-
-            # 回复群聊消息
-            reply_message = f"你好，群聊中有人 @ 了我！收到的消息是：{content}"
-            if send_group_message(group_openid, reply_message, msg_id):
-                return jsonify({"status": "Message sent successfully"})
-            else:
-                return jsonify({"error": "Failed to send message"}), 500
-
-    return jsonify({"error": "Unknown event"}), 400
+            process_message('group', group_openid, content, msg_id)
+        else:
+            return jsonify({"error": "Unknown event"})
 
 def generate_ed25519_signature(plain_token, event_ts, secret):
     sign_str = f"{event_ts}{plain_token}".encode() # 拼接待签名的字符串
@@ -66,57 +52,96 @@ def generate_ed25519_signature(plain_token, event_ts, secret):
     return signature
 
 def get_access_token():
-    url = "https://qqbot-token.weilong.workers.dev/app/getAppAccessToken"
+    # url = "https://qqbot-token.weilong.workers.dev/app/getAppAccessToken" # pythonanywhere + cloudflare
+    url = "https://bots.qq.com/app/getAppAccessToken"
     headers = {"Content-Type": "application/json"}
     data = {"appId": APP_ID, "clientSecret": BOT_SECRET}
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-#         logger.info(response.json().get("access_token"))
-        return response.json().get("access_token")
-    else:
-#         logger.info(f"Failed to get access_token: {response.text}")
-        return None
+    if response.status_code == 200: return response.json().get("access_token")
+    else: return None
 
-def send_private_message(openid, content, msg_id=None): # 单聊
+def send_private_message(openid, msg_type, content_type, content, msg_id=None): # 单聊
     access_token = get_access_token()
     if not access_token: return False
-    url = f"https://qqbot-msg.weilong.workers.dev/v2/users/{openid}/messages"
+    # url = f"https://qqbot-msg.weilong.workers.dev/v2/users/{openid}/messages" # pythonanywhere + cloudflare
+    url = f"https://sandbox.api.sgroup.qq.com/v2/users/{openid}/messages" # 正式环境去掉 sandbox
     headers = {"Authorization": f"QQBot {access_token}", "Content-Type": "application/json"}
-    data = {
-        "msg_type": 0,  # 文本消息
-        "content": content
-    }
-    if msg_id:
-        data["msg_id"] = msg_id
+    data = {"msg_type": msg_type, f"{content}": content}
+    if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-#         logger.info("Private message sent successfully")
-        return True
-    else:
-#         logger.info(f"Failed to send private message: {response.text}")
-        return False
+    if response.status_code == 200: return jsonify({"status": "Message sent successfully"})
+    else: return jsonify({"error": "Failed to send message"})
 
-def send_group_message(group_openid, content, msg_id=None): # 群聊
+def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
     access_token = get_access_token()
     if not access_token: return False
-    url = f"https://qqbot-msg.weilong.workers.dev/v2/groups/{group_openid}/messages"
+    # url = f"https://qqbot-msg.weilong.workers.dev/v2/groups/{group_openid}/messages" # pythonanywhere + cloudflare
+    url = f"https://sandbox.api.sgroup.qq.com/v2/groups/{group_openid}/messages" # 正式环境去掉 sandbox
     headers = {"Authorization": f"QQBot {access_token}", "Content-Type": "application/json"}
-    data = {
-        "msg_type": 0,  # 文本消息
-        "content": content
-    }
-    if msg_id:
-        data["msg_id"] = msg_id
+    data = {"msg_type": msg_type, f"{content}": content}
+    if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-#         logger.info("Group message sent successfully")
-        return True
-    else:
-#         logger.info(f"Failed to send group message: {response.text}")
-        return False
+    if response.status_code == 200: return jsonify({"status": "Message sent successfully"})
+    else: return jsonify({"error": "Failed to send message"})
 
+def process_message(msg_type, openid, content, msg_id):
+    if content == "" or content == '/help':
+        mk = '''
+            # 我是机器人 AIRbot
+
+            ## 使用方法
+            - /指令 + 空格 + 问题 ; > 例如：/天气 上海
+            - /help 查看帮助,这里不需要加空格
+
+            ## 指令列表
+            1. /AI
+            2. /天气
+            3. /help
+            4. 待续功能...
+
+            ## 如需添加其他功能，请联系群主
+        '''
+        if msg_type == 'group': send_group_message(openid, 2, 'markdown', {'content': mk}, msg_id)
+        if msg_type == 'private': send_private_message(openid, 2,'markdown', {'content': mk}, msg_id)
+
+    if content.startswith("/天气"):
+        if (content.split("/天气 ")) == 1:
+            if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
+            if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
+        else:
+            city = content.split("/天气 ")[1]
+            if city == '':
+                if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
+                if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
+            else:
+                try:
+                    res = requests.get(f"https://v.api.aa1.cn/api/api-weather/qq-weather.php?msg={city}").text
+                    if msg_type == 'group': send_group_message(openid, 0, 'content', res, msg_id)
+                    if msg_type == 'private': send_private_message(openid, 0, 'content', res, msg_id)
+                except:
+                    if msg_type == 'group': send_group_message(openid, 0, 'content', "天气获取失败", msg_id)
+                    if msg_type == 'private': send_private_message(openid, 0, 'content', "天气获取失败", msg_id)
+
+    if content.startswith("/AI"):
+        if (content.split("/AI ")) == 1:
+            if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入问题', msg_id)
+            if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入问题', msg_id)
+        else:
+            question = content.split("/AI ")[1]
+            if question == '':
+                if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入问题', msg_id)
+                if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入问题', msg_id)
+            else:
+                try:
+                    res = requests.post(f"https://tools.mgtv100.com/external/v1/pear/deepseek", {'content': question}).json()
+                    if msg_type == 'group': send_group_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
+                    if msg_type == 'private': send_private_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
+                except:
+                    if msg_type == 'group': send_group_message(openid, 0, 'content', "结果获取失败", msg_id)
+                    if msg_type == 'private': send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
+                
 # 仅在本地运行时打开，pythonanywhere 上不需要这两行
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=8080)
