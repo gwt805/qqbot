@@ -146,6 +146,6 @@ def process_message(msg_type, openid, content, msg_id):
                     if msg_type == 'group': return send_group_message(openid, 0, 'content', "结果获取失败", msg_id)
                     if msg_type == 'private': return send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
                 
-# 仅在本地运行时打开，pythonanywhere 上不需要这两行
-# if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=8080)
+# pythonanywhere 上不需要这两行
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
