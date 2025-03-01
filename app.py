@@ -108,8 +108,8 @@ def process_message(msg_type, openid, content, msg_id):
     if content == "" or content == '/help':
         logger.info('process message help')
         mk = "# 我是机器人 AIRbot \n## 使用方法 \n- /指令 + 空格 + 问题 ; > 例如：/天气 上海 \n- /help 查看帮助,这里不需要加空格 \n## 指令列表 \n1. /AI \n2. /天气 \n3. /help \n4. 待续功能... \n## 如需添加其他功能，请联系群主"
-        if msg_type == 'group': return send_group_message(openid, 2, 'markdown', {'content': mk}, msg_id)
-        if msg_type == 'private': return send_private_message(openid, 2,'markdown', {'content': mk}, msg_id)
+        if msg_type == 'group': return send_group_message(openid, 0, 'content', mk, msg_id)
+        if msg_type == 'private': return send_private_message(openid, 0,'content',  mk, msg_id)
 
     if content.startswith("/天气"):
         logger.info('process message weather')
@@ -124,6 +124,7 @@ def process_message(msg_type, openid, content, msg_id):
             else:
                 try:
                     res = requests.get(f"https://v.api.aa1.cn/api/api-weather/qq-weather.php?msg={city}").text
+                    res = str(res)[str(res).index("城"):]
                     logger.info(f"weather res: {res}")
                     if msg_type == 'group': return send_group_message(openid, 0, 'content', res, msg_id)
                     if msg_type == 'private': return send_private_message(openid, 0, 'content', res, msg_id)
@@ -145,8 +146,8 @@ def process_message(msg_type, openid, content, msg_id):
                 try:
                     res = requests.post(f"https://tools.mgtv100.com/external/v1/pear/deepseek", {'content': question}).json()
                     logger.info(f"AI res: {res}")
-                    if msg_type == 'group': return send_group_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
-                    if msg_type == 'private': return send_private_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
+                    if msg_type == 'group': return send_group_message(openid, 0, 'content', res['data']['message'], msg_id)
+                    if msg_type == 'private': return send_private_message(openid, 0, 'content',  res['data']['message'], msg_id)
                 except:
                     if msg_type == 'group': return send_group_message(openid, 0, 'content', "结果获取失败", msg_id)
                     if msg_type == 'private': return send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
