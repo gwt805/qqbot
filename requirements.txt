@@ -1,3 +1,4 @@
 flask
 pynacl
+loguru
 requests

@@ -5,6 +5,7 @@ import os
 import requests
 import nacl.signing
 import nacl.encoding
+from loguru import logger
 from flask import Flask, request,jsonify
 
 app = Flask(__name__)
@@ -15,6 +16,7 @@ BOT_SECRET = os.getenv('BOT_SECRET', "") # your secret
 @app.route('/qqbot', methods=['POST'])
 def qqbot():
     data = request.get_json()
+    logger.info(data)
     if not data:
         return jsonify({"error": "Invalid request"}), 400
 
@@ -31,6 +33,7 @@ def qqbot():
     else:
         event_type = data.get("t")
         message = data.get("d", {})
+        logger.info(message)
         if event_type == "C2C_MESSAGE_CREATE":  # 单聊消息
             openid = message["author"]["id"]
             content = message["content"].strip()
@@ -61,6 +64,7 @@ def get_access_token():
     headers = {"Content-Type": "application/json"}
     data = {"appId": APP_ID, "clientSecret": BOT_SECRET}
     response = requests.post(url, headers=headers, json=data)
+    logger.info(response.json().get("access_token"))
     if response.status_code == 200: return response.json().get("access_token")
     else: return None
 
@@ -74,8 +78,12 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200: return True
-    else: return False
+    if response.status_code == 200:
+        logger.info('private send message success')
+        return True
+    else:
+        logger.info('private send message failed')
+        return False
 
 def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
     access_token = get_access_token()
@@ -87,11 +95,16 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200: return True
-    else: return False
+    if response.status_code == 200:
+        logger.info('group send message success')
+        return True
+    else:
+        logger.info('group send message failed')
+        return False
 
 def process_message(msg_type, openid, content, msg_id):
     if content == "" or content == '/help':
+        logger.info('process message help')
         mk = '''
             # 我是机器人 AIRbot
 
@@ -111,6 +124,7 @@ def process_message(msg_type, openid, content, msg_id):
         if msg_type == 'private': return send_private_message(openid, 2,'markdown', {'content': mk}, msg_id)
 
     if content.startswith("/天气"):
+        logger.info('process message weather')
         if (content.split("/天气 ")) == 1:
             if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
             if msg_type == 'private': return send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
@@ -129,6 +143,7 @@ def process_message(msg_type, openid, content, msg_id):
                     if msg_type == 'private': return send_private_message(openid, 0, 'content', "天气获取失败", msg_id)
 
     if content.startswith("/AI"):
+        logger.info('process message AI')
         if (content.split("/AI ")) == 1:
             if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入问题', msg_id)
             if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入问题', msg_id)
