@@ -78,6 +78,7 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
+    logger.info(response.json())
     if response.status_code == 200:
         logger.info('private send message success')
         return True
@@ -95,6 +96,7 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
     if msg_id: data["msg_id"] = msg_id
 
     response = requests.post(url, headers=headers, json=data)
+    logger.info(response.json())
     if response.status_code == 200:
         logger.info('group send message success')
         return True
