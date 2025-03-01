@@ -2,3 +2,4 @@ flask
 pynacl
 loguru
 requests
+playwright
