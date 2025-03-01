@@ -35,12 +35,12 @@ def qqbot():
             openid = message["author"]["id"]
             content = message["content"].strip()
             msg_id = message["id"]
-            process_message('private', openid, content, msg_id)
+            return process_message('private', openid, content, msg_id)
         elif event_type == "GROUP_AT_MESSAGE_CREATE":  # 群聊消息
             group_openid = message["group_openid"]
             content = message["content"].strip()
             msg_id = message["id"]
-            process_message('group', group_openid, content, msg_id)
+            return process_message('group', group_openid, content, msg_id)
         else:
             return jsonify({"error": "Unknown event"})
 
@@ -103,44 +103,44 @@ def process_message(msg_type, openid, content, msg_id):
 
             ## 如需添加其他功能，请联系群主
         '''
-        if msg_type == 'group': send_group_message(openid, 2, 'markdown', {'content': mk}, msg_id)
-        if msg_type == 'private': send_private_message(openid, 2,'markdown', {'content': mk}, msg_id)
+        if msg_type == 'group': return send_group_message(openid, 2, 'markdown', {'content': mk}, msg_id)
+        if msg_type == 'private': return send_private_message(openid, 2,'markdown', {'content': mk}, msg_id)
 
     if content.startswith("/天气"):
         if (content.split("/天气 ")) == 1:
-            if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
-            if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
+            if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
+            if msg_type == 'private': return send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
         else:
             city = content.split("/天气 ")[1]
             if city == '':
-                if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
-                if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
+                if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入城市名', msg_id)
+                if msg_type == 'private': return send_private_message(openid, 0, 'content', '请输入城市名', msg_id)
             else:
                 try:
                     res = requests.get(f"https://v.api.aa1.cn/api/api-weather/qq-weather.php?msg={city}").text
-                    if msg_type == 'group': send_group_message(openid, 0, 'content', res, msg_id)
-                    if msg_type == 'private': send_private_message(openid, 0, 'content', res, msg_id)
+                    if msg_type == 'group': return send_group_message(openid, 0, 'content', res, msg_id)
+                    if msg_type == 'private': return send_private_message(openid, 0, 'content', res, msg_id)
                 except:
-                    if msg_type == 'group': send_group_message(openid, 0, 'content', "天气获取失败", msg_id)
-                    if msg_type == 'private': send_private_message(openid, 0, 'content', "天气获取失败", msg_id)
+                    if msg_type == 'group': return send_group_message(openid, 0, 'content', "天气获取失败", msg_id)
+                    if msg_type == 'private': return send_private_message(openid, 0, 'content', "天气获取失败", msg_id)
 
     if content.startswith("/AI"):
         if (content.split("/AI ")) == 1:
-            if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入问题', msg_id)
+            if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入问题', msg_id)
             if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入问题', msg_id)
         else:
             question = content.split("/AI ")[1]
             if question == '':
-                if msg_type == 'group': send_group_message(openid, 0, 'content', '请输入问题', msg_id)
-                if msg_type == 'private': send_private_message(openid, 0, 'content', '请输入问题', msg_id)
+                if msg_type == 'group': return send_group_message(openid, 0, 'content', '请输入问题', msg_id)
+                if msg_type == 'private': return send_private_message(openid, 0, 'content', '请输入问题', msg_id)
             else:
                 try:
                     res = requests.post(f"https://tools.mgtv100.com/external/v1/pear/deepseek", {'content': question}).json()
-                    if msg_type == 'group': send_group_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
-                    if msg_type == 'private': send_private_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
+                    if msg_type == 'group': return send_group_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
+                    if msg_type == 'private': return send_private_message(openid, 2, 'markdown', {'content': res['data']['message']}, msg_id)
                 except:
-                    if msg_type == 'group': send_group_message(openid, 0, 'content', "结果获取失败", msg_id)
-                    if msg_type == 'private': send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
+                    if msg_type == 'group': return send_group_message(openid, 0, 'content', "结果获取失败", msg_id)
+                    if msg_type == 'private': return send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
                 
 # 仅在本地运行时打开，pythonanywhere 上不需要这两行
 # if __name__ == "__main__":
