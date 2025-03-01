@@ -144,4 +144,4 @@ def process_message(msg_type, openid, content, msg_id):
                 
 # 仅在本地运行时打开，pythonanywhere 上不需要这两行
 # if __name__ == "__main__":
-#     app.run(host="0.0.0.0", port=8080)
+    # app.run(host="0.0.0.0", port=8080)
