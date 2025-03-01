@@ -1,6 +1,7 @@
 '''消息类型
 文本:0 | markdown:2 | ark:3 | embed:4 | media:7 富媒体
 '''
+import os
 import requests
 import nacl.signing
 import nacl.encoding
@@ -8,8 +9,8 @@ from flask import Flask, request,jsonify
 
 app = Flask(__name__)
 
-APP_ID = "" # your appID
-BOT_SECRET = "" # your secret
+APP_ID = os.getenv('APP_ID', "") # your appID
+BOT_SECRET = os.getenv('BOT_SECRET', "") # your secret
 
 @app.route('/qqbot', methods=['POST'])
 def qqbot():
