@@ -110,7 +110,7 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
     response = requests.post(url, headers=headers, json=data)
     logger.info(response.json())
     if 'code' in response.json():
-        logger.info('private send message failed')
+        logger.info('group send message failed')
         send_private_message(group_openid, msg_type, content_type, response.json()['message'], msg_id=None)
     if response.status_code == 200:
         logger.info('group send message success')
