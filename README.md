@@ -33,4 +33,5 @@
  13. 然后在 QQ群里 @机器人+消息 做测试，如果机器人有消息发出，则部署成功
 
 # 其他
-  当前 app.py 文件中仅为文本类型，其他类型的消息需自己完善
+  - 当前 app.py 文件中仅为文本类型，其他类型的消息需自己完善，markdown 格式需要自己申请
+  - pythonanywhere 有很多requests访问不了的，所以推荐使用 [LinuxONE](https://linuxone.cloud.marist.edu/#/login) + 免费域名([eu.org](https://nic.eu.org/arf/en/)等) + [caddy](https://caddyserver.com/docs/install) 来搭建
