@@ -1,7 +1,14 @@
 '''消息类型
 文本:0 | markdown:2 | ark:3 | embed:4 | media:7 富媒体
+markdown {"content": "内容"}
+media {"file_type": 1, url: ", "srv_send_msg", "srv_send_msg": False}
+    图片:1 png/jpg
+    视频:2 mp4
+    音频:3 silk
+    文件:4 暂不支持
 '''
 import os
+import random
 import requests
 import nacl.signing
 import nacl.encoding
@@ -115,7 +122,7 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
 def process_message(msg_type, openid, content, msg_id):
     if content == "" or content == '/help':
         logger.info('process message help')
-        mk = "\n我是机器人 AIRbot\n\n使用方法\n    1. /指令 + 空格 + 问题 ; > 例如：/天气 上海\n    2. /help 查看帮助,这里不需要加空格\n\n指令列表\n    1. /AI \n    2. /天气 \n    3. /help \n    4. 待续功能... \n\n如需添加其他功能，请联系群主"
+        mk = "\n我是机器人 AIRbot\n\n指令列表\n    1. /AI+空格+问题\n    2. /天气+空格+市级地区\n    3. /help\n    4. /随机图片\n\n如需添加其他功能，请联系群主"
         if msg_type == 'group': return send_group_message(openid, 0, 'content', mk, msg_id)
         if msg_type == 'private': return send_private_message(openid, 0,'content',  mk, msg_id)
     elif content.startswith("/天气"):
@@ -157,6 +164,16 @@ def process_message(msg_type, openid, content, msg_id):
                 except:
                     if msg_type == 'group': return send_group_message(openid, 0, 'content', "\n结果获取失败", msg_id)
                     if msg_type == 'private': return send_private_message(openid, 0, 'content', "结果获取失败", msg_id)
+    elif content == "/随机图片":
+        logger.info('process message random image')
+        try:
+            res = requests.get(f"https://api.acgurl.link/img?type={random.choice(['ysh', 'yss', 'xqh', 'xqs', 'bing'])}&json=true").json()
+            logger.info(f"random image res: {res}")
+            if msg_type == 'group': return send_group_message(openid, 7, 'media', {'file_type': 1, 'url': res['url'], 'srv_send_msg': False}, msg_id)
+            if msg_type == 'private': return send_private_message(openid, 7, 'media',  {'file_type': 1, 'url': res['url'], 'srv_send_msg': False}, msg_id)
+        except:
+            if msg_type == 'group': return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
+            if msg_type == 'private': return send_private_message(openid, 0, 'content', "图片获取失败", msg_id)
     else:
         logger.info('process message unknown')
         if msg_type == 'group': return send_group_message(openid, 0, 'content', '\n未知指令，请使用 /help 查看指令大全', msg_id)
