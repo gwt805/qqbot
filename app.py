@@ -120,35 +120,10 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
         logger.info('group send message failed')
         return False
 
-def upload_media(msg_type, openid, file_type, media_url):
-    access_token = get_access_token()
-    if not access_token:
-        logger.error("Failed to get access token.")
-        return None
-
-    if msg_type == 'private': url = f"https://sandbox.api.sgroup.qq.com/v2/groups/{openid}/files"
-    if msg_type == 'group' : url = f"https://sandbox.api.sgroup.qq.com/v2/users/{openid}/files"
-
-    headers = {"Authorization": f"QQBot {access_token}", "Content-Type": "application/json"}
-    data = {
-        "file_type": file_type,
-        "url": media_url,
-        "srv_send_msg": False
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        file_info = response.json().get("file_info")
-        logger.info(f"Media uploaded successfully: {file_info}")
-        return file_info
-    else:
-        logger.error(f"Failed to upload media: {response.json()}")
-        return None
-
 def process_message(msg_type, openid, content, msg_id):
     if content == "" or content == '/help':
         logger.info('process message help')
-        mk = "\n我是机器人 AIRbot\n\n指令列表\n    1. /AI+空格+问题\n    2. /天气+空格+市级地区\n    3. /help\n    4. /随机图片\n\n如需添加其他功能，请联系群主"
+        mk = "\n我是机器人 AIRbot\n\n指令列表\n    1. /AI+空格+问题\n    2. /天气+空格+市级地区\n    3. /help\n\n如需添加其他功能，请联系群主"#\n    4. /随机图片
         if msg_type == 'group': return send_group_message(openid, 0, 'content', mk, msg_id)
         if msg_type == 'private': return send_private_message(openid, 0,'content',  mk, msg_id)
     elif content.startswith("/天气"):
@@ -195,18 +170,8 @@ def process_message(msg_type, openid, content, msg_id):
         try:
             res = requests.get(f"https://api.acgurl.link/img?type={random.choice(['ysh', 'yss', 'xqh', 'xqs', 'bing'])}&json=true").json()
             logger.info(f"random image res: {res}")
-            if msg_type == 'group':
-                if "url" in res:
-                    file_info = upload_media('group', openid, file_type=1, media_url=res["url"])
-                    if file_info: return send_group_message(openid, 7, 'media', file_info, msg_id)
-                    else: return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
-                else: return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
-            if msg_type == 'private':
-                if "url" in res:
-                    file_info = upload_media('group', openid, file_type=1, media_url=res["url"])
-                    if file_info: return send_private_message(openid, 7, 'media', file_info, msg_id)
-                    else: return send_private_message(openid, 0, 'content', "\n图片获取失败", msg_id)
-                else: return send_private_message(openid, 0, 'content', "\n图片获取失败", msg_id)
+            if msg_type == 'group': return send_group_message(openid, 7, 'media', {'file_type': 1, 'url': res['url'], 'srv_send_msg': True}, msg_id)
+            if msg_type == 'private': return send_private_message(openid, 7, 'media',  {'file_type': 1, 'url': res['url'], 'srv_send_msg': True}, msg_id)
         except:
             if msg_type == 'group': return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
             if msg_type == 'private': return send_private_message(openid, 0, 'content', "图片获取失败", msg_id)
