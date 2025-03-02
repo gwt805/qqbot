@@ -42,7 +42,6 @@ def qqbot():
     else:
         event_type = data.get("t")
         message = data.get("d", {})
-        logger.info(message)
         if event_type == "C2C_MESSAGE_CREATE":  # 单聊消息
             openid = message["author"]["id"]
             content = message["content"].strip()
@@ -171,8 +170,8 @@ def process_message(msg_type, openid, content, msg_id):
         try:
             res = requests.get(f"https://api.acgurl.link/img?type={random.choice(['ysh', 'yss', 'xqh', 'xqs', 'bing'])}&json=true").json()
             logger.info(f"random image res: {res}")
-            if msg_type == 'group': return send_group_message(openid, 7, 'media', {'file_type': 1, 'url': res['url'], 'srv_send_msg': False}, msg_id)
-            if msg_type == 'private': return send_private_message(openid, 7, 'media',  {'file_type': 1, 'url': res['url'], 'srv_send_msg': False}, msg_id)
+            if msg_type == 'group': return send_group_message(openid, 7, 'media', {'file_type': 1, 'url': res['url'], 'srv_send_msg': True}, msg_id)
+            if msg_type == 'private': return send_private_message(openid, 7, 'media',  {'file_type': 1, 'url': res['url'], 'srv_send_msg': True}, msg_id)
         except:
             if msg_type == 'group': return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
             if msg_type == 'private': return send_private_message(openid, 0, 'content', "图片获取失败", msg_id)
