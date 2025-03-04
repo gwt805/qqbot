@@ -152,7 +152,7 @@ def process_message(msg_type, openid, content, msg_id):
 
     if content == "" or content == '/help':
         logger.info('process message help')
-        mk = "\n我是机器人 AIRbot\n\n指令列表\n    1. /AI+空格+问题\n    2. /天气+空格+市级地区\n    3. /help\n    4. /随机图片\n\n如需添加其他功能，请联系群主"
+        mk = "\n我是机器人 AIRobot\n\n指令列表\n    1. /AI+空格+问题\n    2. /天气+空格+市级地区\n    3. /help\n    4. /随机图片\n\n如需添加其他功能，请联系群主"
         if msg_type == 'group': return send_group_message(openid, 0, 'content', mk, msg_id)
         if msg_type == 'private': return send_private_message(openid, 0,'content',  mk, msg_id)
     elif content.startswith("/天气"):
