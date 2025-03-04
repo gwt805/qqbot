@@ -26,7 +26,7 @@ processed_message_ids = set()
 logger.info(f"APP_ID: {APP_ID} BOT_SECRET: {BOT_SECRET}")
 
 @app.route('/qqbot', methods=['POST'])
-async def qqbot():
+def qqbot():
     data = request.get_json()
     logger.info(data)
     if not data:
@@ -49,27 +49,27 @@ async def qqbot():
             openid = message["author"]["id"]
             content = message["content"].strip()
             msg_id = message["id"]
-            is_success =  await process_message('private', openid, content, msg_id)
+            is_success =  process_message('private', openid, content, msg_id)
             if is_success: return jsonify({"status": "Message sent successfully"})
             else: return jsonify({"error": "Failed to send message"})
         elif event_type == "GROUP_AT_MESSAGE_CREATE":  # 群聊消息
             group_openid = message["group_openid"]
             content = message["content"].strip()
             msg_id = message["id"]
-            is_success = await process_message('group', group_openid, content, msg_id)
+            is_success = process_message('group', group_openid, content, msg_id)
             if is_success: return jsonify({"status": "Message sent successfully"})
             else: return jsonify({"error": "Failed to send message"})
         else:
             return jsonify({"error": "Unknown event"})
 
-async def generate_ed25519_signature(plain_token, event_ts, secret):
+def generate_ed25519_signature(plain_token, event_ts, secret):
     sign_str = f"{event_ts}{plain_token}".encode() # 拼接待签名的字符串
     signing_key = nacl.signing.SigningKey(secret.encode()) # 生成私钥
     signed_message = signing_key.sign(sign_str)
     signature = signed_message.signature.hex() # 生成签名
     return signature
 
-async def get_access_token():
+def get_access_token():
     # url = "https://qqbot-token.weilong.workers.dev/app/getAppAccessToken" # pythonanywhere + cloudflare
     url = "https://bots.qq.com/app/getAppAccessToken"
     headers = {"Content-Type": "application/json"}
@@ -79,8 +79,8 @@ async def get_access_token():
     if response.status_code == 200: return response.json().get("access_token")
     else: return None
 
-async def send_private_message(openid, msg_type, content_type, content, msg_id=None): # 单聊
-    access_token = await get_access_token()
+def send_private_message(openid, msg_type, content_type, content, msg_id=None): # 单聊
+    access_token = get_access_token()
     if not access_token: return False
     # url = f"https://qqbot-msg.weilong.workers.dev/v2/users/{openid}/messages" # pythonanywhere + cloudflare
     url = f"https://sandbox.api.sgroup.qq.com/v2/users/{openid}/messages" # 正式环境去掉 sandbox
@@ -99,8 +99,8 @@ async def send_private_message(openid, msg_type, content_type, content, msg_id=N
         logger.info(f'private send message failed')
         return False
 
-async def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
-    access_token = await get_access_token()
+def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
+    access_token = get_access_token()
     if not access_token: return False
     # url = f"https://qqbot-msg.weilong.workers.dev/v2/groups/{group_openid}/messages" # pythonanywhere + cloudflare
     url = f"https://sandbox.api.sgroup.qq.com/v2/groups/{group_openid}/messages" # 正式环境去掉 sandbox
@@ -119,8 +119,8 @@ async def send_group_message(group_openid, msg_type, content_type, content, msg_
         logger.info('group send message failed')
         return False
 
-async def upload_media(upload_type, openid, file_type, media_url):
-    access_token = await get_access_token()
+def upload_media(upload_type, openid, file_type, media_url):
+    access_token = get_access_token()
     if not access_token:
         logger.error("Failed to get access token.")
         return None
@@ -143,7 +143,7 @@ async def upload_media(upload_type, openid, file_type, media_url):
         logger.error(f"Failed to upload media: {response.json()}")
         return None
 
-async def process_message(msg_type, openid, content, msg_id):
+def process_message(msg_type, openid, content, msg_id):
     global processed_message_ids
     if msg_id in processed_message_ids:
         logger.info(f"Message {msg_id} already processed, skipping")
@@ -201,34 +201,34 @@ async def process_message(msg_type, openid, content, msg_id):
             logger.info(f"random image res: {res}")
             if msg_type == 'group':
                 if "url" in res:
-                    file_info = await upload_media('groups' ,openid, file_type=1, media_url=res["url"])
+                    file_info = upload_media('groups' ,openid, file_type=1, media_url=res["url"])
                     if file_info:
-                        return await send_group_message(openid, 7, "media", {'file_type': 1, 'file_info': file_info, 'srv_send_msg': False}, msg_id)
+                        return send_group_message(openid, 7, "media", {'file_type': 1, 'file_info': file_info, 'srv_send_msg': False}, msg_id)
                     else:
-                        return await send_group_message(group_openid, 0, "content", "\图片获取失败", msg_id)
+                        return send_group_message(group_openid, 0, "content", "\图片获取失败", msg_id)
                 else:
-                    return await send_group_message(openid, 0, "content", "\图片获取失败", msg_id)
+                    return send_group_message(openid, 0, "content", "\图片获取失败", msg_id)
                 return send_group_message(openid, 7, 'media', {'file_type': 1, 'url': res['url'], 'srv_send_msg': True}, msg_id)
             if msg_type == 'private':
                 if "url" in res:
-                    file_info = await upload_media('users' ,openid, file_type=1, media_url=res["url"])
+                    file_info = upload_media('users' ,openid, file_type=1, media_url=res["url"])
                     if file_info:
-                        return await send_private_message(openid, 7, "media", {'file_type': 1, 'file_info': file_info, 'srv_send_msg': False}, msg_id)
+                        return send_private_message(openid, 7, "media", {'file_type': 1, 'file_info': file_info, 'srv_send_msg': False}, msg_id)
                     else:
-                        return await send_private_message(group_openid, 0, "content", "\图片获取失败", msg_id)
+                        return send_private_message(group_openid, 0, "content", "\图片获取失败", msg_id)
                 else:
-                    return await send_private_message(openid, 0, "content", "\图片获取失败", msg_id)
+                    return send_private_message(openid, 0, "content", "\图片获取失败", msg_id)
         except:
             if msg_type == 'group':
                 return send_group_message(openid, 0, 'content', "\n图片获取失败", msg_id)
             if msg_type == 'private':
-                return await send_private_message(openid, 0, 'content', "图片获取失败", msg_id)
+                return send_private_message(openid, 0, 'content', "图片获取失败", msg_id)
     else:
         logger.info('process message unknown')
         if msg_type == 'group':
-            return await send_group_message(openid, 0, 'content', '\n未知指令，请使用 /help 查看指令大全', msg_id)
+            return send_group_message(openid, 0, 'content', '\n未知指令，请使用 /help 查看指令大全', msg_id)
         if msg_type == 'private':
-            return await send_private_message(openid, 0, 'content', '未知指令，请使用 /help 查看指令大全', msg_id)
+            return send_private_message(openid, 0, 'content', '未知指令，请使用 /help 查看指令大全', msg_id)
                 
 # pythonanywhere 上不需要这两行
 if __name__ == "__main__":
