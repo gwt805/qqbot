@@ -232,4 +232,4 @@ async def process_message(msg_type, openid, content, msg_id):
                 
 # pythonanywhere 上不需要这两行
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=8080)
