@@ -94,9 +94,13 @@ def send_private_message(openid, msg_type, content_type, content, msg_id=None): 
 
     if response.status_code == 200:
         logger.info('private send message success')
+        if msg_id in processed_message_ids:
+            processed_message_ids.remove(msg_id)
         return True
     else:
         logger.info(f'private send message failed')
+        if msg_id in processed_message_ids:
+            processed_message_ids.remove(msg_id)
         return False
 
 def send_group_message(group_openid, msg_type, content_type, content, msg_id=None): # 群聊
@@ -114,9 +118,13 @@ def send_group_message(group_openid, msg_type, content_type, content, msg_id=Non
 
     if response.status_code == 200:
         logger.info('group send message success')
+        if msg_id in processed_message_ids:
+            processed_message_ids.remove(msg_id)
         return True
     else:
         logger.info('group send message failed')
+        if msg_id in processed_message_ids:
+            processed_message_ids.remove(msg_id)
         return False
 
 def upload_media(upload_type, openid, file_type, media_url):
